@@ -29,6 +29,8 @@ MRuby::Gem::Specification.new('mruby-heeler') do |spec|
   spec.add_dependency 'mruby-socket', core: 'mruby-socket'
   spec.add_dependency 'mruby-http',   mgem: 'mruby-http'
 
+  spec.add_test_dependency 'mruby-shelf', mgem: 'mruby-shelf'
+
   spec.linker.libraries << 'pthread' unless target_win32?
 end
 
