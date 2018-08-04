@@ -24,7 +24,7 @@
 #include "mruby.h"
 #include "mruby/error.h"
 
-#include <sys/types.h>
+#ifndef _WIN32
 #include <sys/wait.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,16 +33,30 @@
 
 static pthread_t clean_thread;
 
+static void *
+mrb_do_cleaning (void *data)
+{
+    int inval = (int)data;
+
+    while (1)
+    {
+        while (waitpid((pid_t)(-1), 0, WNOHANG) > 0);
+        sleep(inval);
+    }
+}
+
+#endif
+
 static mrb_value
 mrb_f_fork (mrb_state *mrb, mrb_value self)
 {
     mrb_value b;
-    pid_t pid = 0;
+    int pid = 0;
 
     mrb_get_args(mrb, "&", &b);
 
 #ifndef _WIN32
-    pid = fork();
+    pid = (int)fork();
 #endif
 
     switch (pid)
@@ -50,8 +64,9 @@ mrb_f_fork (mrb_state *mrb, mrb_value self)
         case 0:
         {
             mrb_yield(mrb, b, mrb_nil_value());
+#ifndef _WIN32
             _exit(0);
-
+#endif
             return mrb_nil_value();
         }
         case -1:
@@ -65,19 +80,6 @@ mrb_f_fork (mrb_state *mrb, mrb_value self)
         }
     }
 }
-
-#ifndef _WIN32
-static void *mrb_do_cleaning (void *data)
-{
-    int inval = (int)data;
-
-    while (1)
-    {
-        while (waitpid((pid_t)(-1), 0, WNOHANG) > 0);
-        sleep(inval);
-    }
-}
-#endif
 
 static inline mrb_value
 mrb_f_stop_cleanup (mrb_state *mrb, mrb_value self)

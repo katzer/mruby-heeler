@@ -29,5 +29,13 @@ MRuby::Gem::Specification.new('mruby-heeler') do |spec|
   spec.add_dependency 'mruby-socket', core: 'mruby-socket'
   spec.add_dependency 'mruby-http',   mgem: 'mruby-http'
 
-  spec.linker.libraries << 'pthread'
+  spec.linker.libraries << 'pthread' unless target_win32?
+end
+
+# If the build target points to Windows OS.
+#
+# @return [ Boolean ]
+def target_win32?
+  return true if ENV['OS'] == 'Windows_NT'
+  build.is_a?(MRuby::CrossBuild) && build.host_target.to_s =~ /mingw/
 end
