@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 module Heeler
+  # Forks the process for each incoming request.
   class Server
     # Initializes the server via a config hash map.
     #
@@ -65,7 +66,7 @@ module Heeler
     #
     # @return [ Integer ]
     def timeout
-      [0, config[:timeout].to_i || 5].max
+      [0, config[:timeout] || 5].max
     end
 
     # Bind to the host and port and wait for incomming connections.
@@ -77,7 +78,7 @@ module Heeler
       keep_clean
 
       while (io = accept(tcp))
-        fork { handle(io) } && io.close
+        fork { handle(io) } && close(io)
       end
     ensure
       stop_cleanup
@@ -91,11 +92,11 @@ module Heeler
     #
     # @return [ Void ]
     def handle(io)
-      req = parse(recv(io))
-      res = exec(req)
+      data = recv(io)
+      res  = exec parse data if data
+    ensure
       send(io, res)
-    rescue RuntimeError
-      raise 'Connection reset by peer' if config[:debug] && io.closed?
+      GC.start if config[:run_gc_per_request]
     end
 
     # Wait for incoming socket connection.
@@ -129,9 +130,9 @@ module Heeler
 
         data ? (data += buf) : (data = buf)
 
-        return data if buf.size != RECV_BUF
+        return data if buf.bytesize != RECV_BUF
       rescue RuntimeError
-        next if (Time.now - time) < timeout
+        (Time.now - time) < timeout ? retry : return
       end
     end
 
@@ -161,9 +162,9 @@ module Heeler
       headers[CONNECTION] = CLOSE
       headers[SERVER]     = HEELER
 
-      header = headers.reduce('') { |s, p| "#{s}#{p[0]}:#{p[1]}#{SEP}" }
+      header = headers.reduce('') { |s, p| "#{s}#{p[0]}:#{p[1]}#{CRLF}" }
 
-      "#{http_status_line(code)}#{SEP}#{header}#{SEP}#{body.join}"
+      "#{http_status_line(code)}#{CRLF}#{header}#{CRLF}#{body.join}"
     end
 
     # Send data back to the client.
@@ -173,13 +174,26 @@ module Heeler
     #
     # @return [ String ]
     def send(io, data)
-      while true
+      while data
         n = io.syswrite(data)
         return if n == data.bytesize
         data = data[n..-1]
       end
+    rescue RuntimeError
+      raise 'Connection reset by peer' if config[:debug] && io.closed?
     ensure
+      close(io)
+    end
+
+    # Close the socket from server side.
+    #
+    # @param [ BasicSocket ] io The tcp socket to close.
+    #
+    # @return [ Void ]
+    def close(io)
       io.close
+    rescue RuntimeError
+      nil
     end
 
     # Return the HTTP status line including the HTTP version, response code

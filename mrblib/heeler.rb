@@ -34,7 +34,8 @@ module Heeler
   CLOSE          = 'close'.freeze
 
   # For internal usage
-  SEP            = "\r\n".freeze
+  CRLF           = "\r\n".freeze
+  SEP            = ': '.freeze
   RECV_BUF       = 1024
 
   # Every standard HTTP code mapped to the appropriate message.
