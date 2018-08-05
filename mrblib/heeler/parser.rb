@@ -20,22 +20,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-MRuby::Gem::Specification.new('mruby-heeler') do |spec|
-  spec.license = 'MIT'
-  spec.authors = 'Sebastian Katzer'
-  spec.summary = 'Multi-process webserver'
+# rubocop:disable Metrics/AbcSize
 
-  spec.add_dependency      'mruby-time',   core: 'mruby-time'
-  spec.add_dependency      'mruby-socket', core: 'mruby-socket'
-  spec.add_test_dependency 'mruby-shelf',  mgem: 'mruby-shelf'
+module Heeler
+  # Used to parse the HTTP request.
+  class Parser < BasicObject
+    # Parse the HTTP data stream.
+    #
+    # @param [ String ] data The HTTP request as a string.
+    #
+    # @return [ Heeler::Request ]
+    def parse_request(data)
+      req                        = Request.new
+      head, host_port, *tail     = data.split(CRLF)
+      method, path_query, schema = head.split(' ')
+      path, query                = path_query.split('?')
+      host, port                 = host_port[6..-1].split(':')
 
-  spec.linker.libraries << 'pthread' unless target_win32?
+      req.method = method
+      req.path   = path
+      req.query  = query
+      req.schema = schema
+      req.host   = host
+      req.port   = port
+
+      tail.each { |e| req.headers.store(*e.split(SEP)) }
+
+      req
+    end
+  end
 end
 
-# If the build target points to Windows OS.
-#
-# @return [ Boolean ]
-def target_win32?
-  return true if ENV['OS'] == 'Windows_NT'
-  build.is_a?(MRuby::CrossBuild) && build.host_target.to_s =~ /mingw/
-end
+# rubocop:enable Metrics/AbcSize

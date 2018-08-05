@@ -20,22 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-MRuby::Gem::Specification.new('mruby-heeler') do |spec|
-  spec.license = 'MIT'
-  spec.authors = 'Sebastian Katzer'
-  spec.summary = 'Multi-process webserver'
+module Heeler
+  # Wrapper for the parsed HTTP request.
+  class Request < BasicObject
+    # Initialize the object with an empty headers hash.
+    #
+    # @return [ Void ]
+    def initialize
+      @headers = {}
+    end
 
-  spec.add_dependency      'mruby-time',   core: 'mruby-time'
-  spec.add_dependency      'mruby-socket', core: 'mruby-socket'
-  spec.add_test_dependency 'mruby-shelf',  mgem: 'mruby-shelf'
-
-  spec.linker.libraries << 'pthread' unless target_win32?
-end
-
-# If the build target points to Windows OS.
-#
-# @return [ Boolean ]
-def target_win32?
-  return true if ENV['OS'] == 'Windows_NT'
-  build.is_a?(MRuby::CrossBuild) && build.host_target.to_s =~ /mingw/
+    # Getter and Setter methods for all properties
+    attr_accessor :schema, :host, :port, :path, :query, :method, :headers
+  end
 end

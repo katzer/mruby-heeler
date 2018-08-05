@@ -32,7 +32,7 @@ module Heeler
     def initialize(app, config = {})
       @config  = config.dup
       @app     = app
-      @parser  = HTTP::Parser.new
+      @parser  = Parser.new
       @sigpipe = Socket.const_defined?(:SO_NOSIGPIPE)
     end
 
