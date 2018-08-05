@@ -43,6 +43,8 @@ mrb_do_cleaning (void *data)
         while (waitpid((pid_t)(-1), 0, WNOHANG) > 0);
         sleep(inval);
     }
+
+    return NULL;
 }
 
 #endif
