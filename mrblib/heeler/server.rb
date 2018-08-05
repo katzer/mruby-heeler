@@ -75,6 +75,7 @@ module Heeler
     def run
       tcp = TCPServer.new(host, port)
 
+      GC.start
       keep_clean
 
       while (io = accept(tcp))
