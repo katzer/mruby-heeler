@@ -99,6 +99,11 @@ mrb_f_keep_clean (mrb_state *mrb, mrb_value self)
 
     mrb_get_args(mrb, "|i", &inval);
 
+    if (inval <= 0)
+    {
+        mrb_sys_fail(mrb, "interval for keep_clean must be greater 0");
+    }
+
     mrb_f_stop_cleanup(mrb, self);
 
     if ((res = pthread_create(&clean_thread, NULL, &mrb_do_cleaning, (void *)inval)))
