@@ -76,7 +76,7 @@ module Heeler
       tcp = TCPServer.new(host, port)
 
       GC.start
-      keep_clean
+      keep_clean(config[:cleanup_interval] || 5)
 
       while (io = accept(tcp))
         fork { handle(io) } && close(io)
