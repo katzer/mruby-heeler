@@ -113,7 +113,7 @@ module Heeler
     rescue RuntimeError => e
       counter <= max_retry ? retry : raise(e)
     ensure
-      io.setsockopt(Socket::SOL_SOCKET, Socket::SO_NOSIGPIPE, true) if @sigpipe
+      io&.setsockopt(Socket::SOL_SOCKET, Socket::SO_NOSIGPIPE, true) if @sigpipe
     end
 
     # Receive data from the socket in a loop until all data have been received.
